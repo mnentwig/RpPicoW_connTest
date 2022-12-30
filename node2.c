@@ -36,9 +36,7 @@ int main() {
     cyw43_arch_enable_sta_mode();
     if (cyw43_arch_wifi_connect_timeout_ms("picow_test", "buZZword", CYW43_AUTH_WPA2_AES_PSK, 30000)) 
       blink(2);
-    
-    udp_init();
-    
+        
     // === set up receive ===
     udp_init();
     struct udp_pcb *udp = udp_new();
