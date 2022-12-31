@@ -5,7 +5,7 @@
 
 #include "lwip/pbuf.h"
 #include "dhcpserver.h"
-
+static const int port = WIFI_PORT; // CMakeLists.txt
 void blink(int n){
   while (true){
     for (int ix = 0; ix < n; ++ix){
@@ -19,46 +19,16 @@ void blink(int n){
 }
 
 void sendMsg(const ip_addr_t* senderAddr){
-#if 0
-  static struct udp_pcb *sendMsg_pcb = NULL;
-  static struct pbuf* sendMsg_p = NULL;
-
-  // === startup ===
-  if (!sendMsg_p){
-    const size_t nData = 16;    
-    sendMsg_p = pbuf_alloc(PBUF_TRANSPORT, nData, PBUF_RAM);
-    if (!sendMsg_p) blink(3);
-  }
-
-  if (sendMsg_pcb == NULL){
-    sendMsg_pcb = udp_new();
-    if (!sendMsg_pcb) blink(3);
-    if (ERR_OK != udp_bind(sendMsg_pcb, IP_ADDR_ANY, /*any*/0)) blink(4);
-  }
-
-  // === copy data ===
-  uint8_t* pData = (uint8_t*)sendMsg_p->payload;
-  for (size_t ix = 0; ix < nData; ++ix)
-    *(pData++) = 0;
-
-  // === send reply ===
-  //  if (ERR_OK != udp_connect(sendMsg_pcb, senderAddr, 8081)) blink(5);
-  //  if (ERR_OK != udp_send(sendMsg_pcb, sendMsg_p)) blink(6);
-  int err = udp_sendto(sendMsg_pcb, sendMsg_p, senderAddr, 8081);
-  if (err != ERR_OK)
-    blink(-err);
-#else
-  struct pbuf* p = pbuf_alloc(PBUF_TRANSPORT,16,PBUF_RAM);
+  struct pbuf* p = pbuf_alloc(PBUF_TRANSPORT, 16, PBUF_RAM);
   //  memcpy(p->payload, Test, sizeof(Test));
     
   struct udp_pcb* pcb = udp_new();
-  udp_bind(pcb, IP_ADDR_ANY, 8080);
-  udp_connect(pcb, senderAddr, 8081);
+  udp_bind(pcb, IP_ADDR_ANY, port);
+  udp_connect(pcb, senderAddr, port);
   int err=udp_send(pcb,p);
   if(err!=ERR_OK) blink(-err);
   pbuf_free(p);
-  udp_remove(pcb);
-#endif
+  udp_remove(pcb); // don't reuse ('alloc' appears to 'initialize'?)
 }
 
 static volatile int deltaTime = 1000;
@@ -78,9 +48,8 @@ int main() {
         printf("failed to initialise\n");
         return 1;
     }
-    const char *ap_name = "picow_test";
-    const char *password = "buZZword";
-
+    const char *ap_name = WIFI_SSID; // CMakeLists.txt
+    const char *password = WIFI_PASSWORD; // CMakeLists.txt
     cyw43_arch_enable_ap_mode(ap_name, password, CYW43_AUTH_WPA2_AES_PSK);
 
     ip4_addr_t gw, mask;

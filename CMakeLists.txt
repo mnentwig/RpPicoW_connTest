@@ -16,41 +16,63 @@ endif()
 pico_sdk_init()
 
 # =================================================
+# settings agreed between both nodes
+# =================================================
+set(WIFI_SSID "myTestLink")
+set(WIFI_PASSWORD "buZZword")
+set(WIFI_PORT "8080") # arbitrarily using "typical" HTTP port
+
+# =================================================
 # node 1 - WLAN access point
 # =================================================
-add_executable(node1_ap
-        node1_ap.c
-        dhcpserver/dhcpserver.c
-        )
-pico_enable_stdio_usb(node1_ap 0) # not using UART
-pico_enable_stdio_uart(node1_ap 0) # nor USB serial
+set(T "node1_ap")
+add_executable(${T}
+  node1_ap.c
+  dhcpserver/dhcpserver.c
+  )
+pico_enable_stdio_usb(${T} 0) # not using UART
+pico_enable_stdio_uart(${T} 0) # nor USB serial
 
-target_include_directories(node1_ap PRIVATE
-        ${CMAKE_CURRENT_LIST_DIR}
-        ${CMAKE_CURRENT_LIST_DIR}/dhcpserver
-        )
+target_include_directories(${T} PRIVATE
+  ${CMAKE_CURRENT_LIST_DIR}
+  ${CMAKE_CURRENT_LIST_DIR}/dhcpserver
+  )
 
-target_link_libraries(node1_ap
-        pico_cyw43_arch_lwip_poll
-        pico_stdlib
-        )
+target_compile_definitions(${T} PRIVATE
+  WIFI_SSID=\"${WIFI_SSID}\"
+  WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
+  WIFI_PORT=${WIFI_PORT}
+  )
 
-pico_add_extra_outputs(node1_ap)
+target_link_libraries(${T}
+  pico_cyw43_arch_lwip_poll
+  pico_stdlib
+  )
+
+pico_add_extra_outputs(${T})
 
 # =================================================
 # node 2 - WLAN "station" (regular WLAN device)
 # =================================================
-add_executable(node2
+set(T "node2")
+add_executable(${T}
   node2.c
   )
-pico_enable_stdio_usb(node2 0) # not using UART
-pico_enable_stdio_uart(node2 0) # nor USB serial
-target_include_directories(node2 PRIVATE
+pico_enable_stdio_usb(${T} 0) # not using UART
+pico_enable_stdio_uart(${T} 0) # nor USB serial
+target_include_directories(${T} PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   )
-target_link_libraries(node2
+
+target_compile_definitions(${T} PRIVATE
+  WIFI_SSID=\"${WIFI_SSID}\"
+  WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
+  WIFI_PORT=${WIFI_PORT}
+  )
+
+target_link_libraries(${T}
   pico_cyw43_arch_lwip_threadsafe_background
   pico_stdlib
   )
-pico_add_extra_outputs(node2)
+pico_add_extra_outputs(${T})
 
