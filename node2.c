@@ -17,13 +17,28 @@ void blink(int n){
   }
 }
 
+static volatile bool received = false;
 static void cb_udp_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *src_addr, u16_t src_port) {
   (void)arg;
   (void)upcb;
   (void)src_port;
   (void)src_addr;
   pbuf_free(p);
-  blink(11); // success!
+  //  blink(11); // success!
+  received = true;
+}
+
+void sendMsg(const ip_addr_t* remoteAddr){
+  struct pbuf* p = pbuf_alloc(PBUF_TRANSPORT, 16, PBUF_RAM);
+  //  memcpy(p->payload, Test, sizeof(Test));
+    
+  struct udp_pcb* pcb = udp_new();
+  udp_bind(pcb, IP_ADDR_ANY, port);
+  udp_connect(pcb, remoteAddr, port);
+  int err=udp_send(pcb,p);
+  if(err!=ERR_OK) blink(-err);
+  pbuf_free(p);
+  udp_remove(pcb); // don't reuse ('alloc' appears to 'initialize'?)
 }
 
 int main() {
@@ -46,20 +61,18 @@ int main() {
     if (ERR_OK != udp_bind( udp, IP_ADDR_ANY, port )) blink(10);
     udp_recv(udp, cb_udp_recv, (void *)NULL);
 
-    size_t nData = 16;    
-    struct pbuf* p = pbuf_alloc(PBUF_TRANSPORT, nData, PBUF_RAM);
-    uint8_t* pData = (uint8_t*)p->payload;
-    *pData = 0;
-
-    struct udp_pcb *pcb = udp_new();
-    if (!pcb) blink(3);
-    if (ERR_OK != udp_bind(pcb, IP_ADDR_ANY, /*any port on own end*/0)) blink(4);
-    if (ERR_OK != udp_connect(pcb, &remoteAddr, port)) blink(5);
+    absolute_time_t tick = 0;
     while (true){
-      if (ERR_OK != udp_send(pcb, p)) blink(6);
-      cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, true);
+      received = false;
+      sendMsg(&remoteAddr);
+      sleep_ms(150);
+      cyw43_arch_poll();
+      cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, received);
+
+      // link status times out after a few seconds. Todo: Reconnect attempt here
+      if (cyw43_tcpip_link_status(&cyw43_state,CYW43_ITF_STA) != CYW43_LINK_UP)
+	blink(7);
     }
-    pbuf_free(p);
     
     return 0;
 }

@@ -18,13 +18,13 @@ void blink(int n){
   }
 }
 
-void sendMsg(const ip_addr_t* senderAddr){
+void sendMsg(const ip_addr_t* remoteAddr){
   struct pbuf* p = pbuf_alloc(PBUF_TRANSPORT, 16, PBUF_RAM);
   //  memcpy(p->payload, Test, sizeof(Test));
     
   struct udp_pcb* pcb = udp_new();
   udp_bind(pcb, IP_ADDR_ANY, port);
-  udp_connect(pcb, senderAddr, port);
+  udp_connect(pcb, remoteAddr, port);
   int err=udp_send(pcb,p);
   if(err!=ERR_OK) blink(-err);
   pbuf_free(p);
