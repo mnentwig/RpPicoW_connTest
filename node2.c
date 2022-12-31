@@ -45,9 +45,9 @@ int main() {
     stdio_init_all();
 
     ip4_addr_t remoteAddr;
-    IP4_ADDR(&remoteAddr, 192, 168, 4, 1);
-
-    if (cyw43_arch_init()) blink(1);
+    IP4_ADDR(&remoteAddr, 192,168,4,1);
+    
+    if (cyw43_arch_init_with_country(CYW43_COUNTRY_GERMANY)) blink(1);
     cyw43_arch_enable_sta_mode();
     const char *ap_name = WIFI_SSID; // CMakeLists.txt
     const char *password = WIFI_PASSWORD; // CMakeLists.txt

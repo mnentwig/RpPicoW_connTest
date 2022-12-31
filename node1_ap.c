@@ -44,10 +44,7 @@ static void cb_udp_recv(void *arg, struct udp_pcb *upcb, struct pbuf *p, const i
 int main() {
     stdio_init_all();
 
-    if (cyw43_arch_init()) {
-        printf("failed to initialise\n");
-        return 1;
-    }
+    if (cyw43_arch_init_with_country(CYW43_COUNTRY_GERMANY)) blink(1);
     const char *ap_name = WIFI_SSID; // CMakeLists.txt
     const char *password = WIFI_PASSWORD; // CMakeLists.txt
     cyw43_arch_enable_ap_mode(ap_name, password, CYW43_AUTH_WPA2_AES_PSK);
@@ -64,7 +61,7 @@ int main() {
     udp_init();
     struct udp_pcb *udp = udp_new();
     if (!udp) blink(9);
-    if (ERR_OK != udp_bind( udp, IP_ADDR_ANY, /*port*/8080 )) blink(10);
+    if (ERR_OK != udp_bind( udp, IP_ADDR_ANY, WIFI_PORT )) blink(10);
     udp_recv(udp, cb_udp_recv, (void *)NULL);
 
     while(true) {
